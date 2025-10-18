@@ -278,10 +278,31 @@ const TelegramSettingsPage = () => {
 
             <Divider sx={{ my: 3 }} />
 
+            {/* Инструкции по запуску бота */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Запуск Telegram бота:
+              </Typography>
+              <Typography variant="body2" component="div" sx={{ mb: 1 }}>
+                1. Установите зависимости: <code>npm install</code>
+              </Typography>
+              <Typography variant="body2" component="div" sx={{ mb: 1 }}>
+                2. Запустите бота: <code>node telegram-bot.js</code>
+              </Typography>
+              <Typography variant="body2" component="div" sx={{ mb: 1 }}>
+                3. Бот будет обрабатывать команды <code>/start</code> и <code>/auth</code>
+              </Typography>
+              <Typography variant="body2" component="div" sx={{ mb: 1 }}>
+                4. Пользователи смогут авторизоваться через кнопку подтверждения
+              </Typography>
+            </Box>
+
+            <Divider sx={{ my: 3 }} />
+
             {/* Инструкции */}
             <Box>
               <Typography variant="h6" gutterBottom>
-                Как настроить бота:
+                Как настроить бота в BotFather:
               </Typography>
               <Typography variant="body2" component="div" sx={{ mb: 1 }}>
                 1. Напишите боту <strong>@BotFather</strong> в Telegram
@@ -299,7 +320,10 @@ const TelegramSettingsPage = () => {
                 5. Отправьте <code>/setdomain</code> и укажите: <code>dnrtop.ru</code> (для продакшена)
               </Typography>
               <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                6. Сохраните настройки выше - вебхук установится автоматически
+                6. Сохраните настройки выше - вебхук и команды установятся автоматически
+              </Typography>
+              <Typography variant="body2" component="div" sx={{ mb: 1 }}>
+                7. Запустите бота локально: <code>node telegram-bot.js</code>
               </Typography>
             </Box>
           </DashboardCard>
