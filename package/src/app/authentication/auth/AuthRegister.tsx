@@ -30,42 +30,62 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
     const [telegramLoading, setTelegramLoading] = useState(false);
     const router = useRouter();
 
+    // Добавляем отладочную информацию
+    console.log('AuthRegister component mounted');
+
     useEffect(() => {
         // Инициализация Telegram Widget только на клиенте
         if (typeof window !== 'undefined') {
+            console.log('Starting Telegram widget initialization...');
+
             // Проверяем, загружен ли уже скрипт
             const existingScript = document.querySelector('script[src*="telegram-widget.js"]');
             if (existingScript) {
+                console.log('Script already exists, initializing...');
                 initTelegramWidget();
                 return;
             }
 
-            const script = document.createElement('script');
-            script.src = 'https://telegram.org/js/telegram-widget.js?22';
-            script.async = true;
-            script.onload = () => {
-                console.log('Telegram script loaded successfully');
-                initTelegramWidget();
-            };
-            script.onerror = () => {
-                console.error('Failed to load Telegram script');
-                showFallbackButton();
-            };
-            document.head.appendChild(script);
+            try {
+                const script = document.createElement('script');
+                script.src = 'https://telegram.org/js/telegram-widget.js?22';
+                script.async = true;
+                script.onload = () => {
+                    console.log('Telegram script loaded successfully');
+                    initTelegramWidget();
+                };
+                script.onerror = () => {
+                    console.error('Failed to load Telegram script');
+                    showFallbackButton();
+                };
 
-            return () => {
-                if (document.head.contains(script)) {
-                    document.head.removeChild(script);
-                }
-            };
+                console.log('Appending script to head...');
+                document.head.appendChild(script);
+                console.log('Script appended successfully');
+
+                return () => {
+                    if (document.head.contains(script)) {
+                        document.head.removeChild(script);
+                    }
+                };
+            } catch (error) {
+                console.error('Error creating Telegram script:', error);
+                showFallbackButton();
+            }
         }
     }, []);
 
     const initTelegramWidget = () => {
+        console.log('initTelegramWidget called');
+
         // Ждем немного для полной загрузки скрипта
         setTimeout(() => {
+            console.log('Checking TelegramLoginWidget availability...');
+            console.log('window.TelegramLoginWidget:', window.TelegramLoginWidget);
+
             if (window.TelegramLoginWidget && window.TelegramLoginWidget.init) {
                 try {
+                    console.log('Initializing Telegram widget...');
                     window.TelegramLoginWidget.init();
                     console.log('Telegram widget initialized successfully');
                 } catch (error) {
@@ -73,7 +93,7 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
                     showFallbackButton();
                 }
             } else {
-                console.warn('TelegramLoginWidget not available');
+                console.warn('TelegramLoginWidget not available, available properties:', Object.keys(window));
                 showFallbackButton();
             }
         }, 1000);
