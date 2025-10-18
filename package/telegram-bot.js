@@ -3,8 +3,10 @@ const TelegramBot = require('node-telegram-bot-api');
 // Замените на ваш токен бота
 const TOKEN = '8470450135:AAHSIdX_6qm-knXEWZm1qVUrPKN4iODoTXQ';
 
-// Создаем бота
-const bot = new TelegramBot(TOKEN, { polling: true });
+// Создаем бота (используем вебхук для продакшена, polling для разработки)
+const bot = new TelegramBot(TOKEN, {
+  polling: process.env.NODE_ENV !== 'production'
+});
 
 // Обработка команды /start
 bot.onText(/\/start/, (msg) => {
@@ -52,8 +54,13 @@ bot.on('callback_query', async (query) => {
     console.log('User confirmed auth:', user);
 
     try {
+      // Определяем URL для отправки данных (локальный для разработки, продакшн для сервера)
+      const baseUrl = process.env.NODE_ENV === 'production'
+        ? 'https://dnrtop.ru'
+        : 'http://localhost:3000';
+
       // Отправляем данные пользователя на сервер
-      const response = await fetch('https://dnrtop.ru/api/auth/telegram/webhook', {
+      const response = await fetch(`${baseUrl}/api/auth/telegram/webhook`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

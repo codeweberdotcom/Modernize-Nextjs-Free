@@ -100,10 +100,14 @@ NEXTAUTH_SECRET=your-nextauth-secret-key
     // Записываем обновленный файл
     fs.writeFileSync(envPath, envContent);
 
-    // Асинхронно устанавливаем вебхук и команды (не блокируем ответ)
-    setupBotAsync(botToken, botUsername).catch(error => {
-      console.error('Error setting up bot:', error);
-    });
+    // Асинхронно устанавливаем вебхук и команды (только для продакшена)
+    if (process.env.NODE_ENV === 'production') {
+      setupBotAsync(botToken, botUsername).catch(error => {
+        console.error('Error setting up bot:', error);
+      });
+    } else {
+      console.log('⏭️ Skipping webhook setup for development mode');
+    }
 
     return NextResponse.json({
       success: true,
@@ -141,40 +145,42 @@ async function setupBotAsync(botToken: string, botUsername: string): Promise<voi
   try {
     console.log('Setting up Telegram bot completely...');
 
-    // Определяем URL для вебхука в зависимости от окружения
     const isProduction = process.env.NODE_ENV === 'production';
-    const baseUrl = isProduction
-      ? `https://${process.env.VERCEL_URL || 'dnrtop.ru'}`
-      : 'http://localhost:3000';
 
-    const webhookUrl = `${baseUrl}/api/auth/telegram/webhook`;
+    if (isProduction) {
+      // Определяем URL для вебхука только для продакшена
+      const baseUrl = `https://${process.env.VERCEL_URL || 'dnrtop.ru'}`;
+      const webhookUrl = `${baseUrl}/api/auth/telegram/webhook`;
 
-    console.log(`Setting webhook to: ${webhookUrl}`);
+      console.log(`Setting webhook to: ${webhookUrl}`);
 
-    // Шаг 1: Устанавливаем вебхук
-    const webhookResponse = await fetch(
-      `https://api.telegram.org/bot${botToken}/setWebhook`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: webhookUrl,
-          max_connections: 1,
-          drop_pending_updates: true,
-        }),
+      // Шаг 1: Устанавливаем вебхук
+      const webhookResponse = await fetch(
+        `https://api.telegram.org/bot${botToken}/setWebhook`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url: webhookUrl,
+            max_connections: 1,
+            drop_pending_updates: true,
+          }),
+        }
+      );
+
+      const webhookResult = await webhookResponse.json();
+
+      if (!webhookResult.ok) {
+        console.error('❌ Failed to set webhook:', webhookResult);
+        throw new Error(`Failed to set webhook: ${webhookResult.description}`);
       }
-    );
 
-    const webhookResult = await webhookResponse.json();
-
-    if (!webhookResult.ok) {
-      console.error('❌ Failed to set webhook:', webhookResult);
-      throw new Error(`Failed to set webhook: ${webhookResult.description}`);
+      console.log('✅ Webhook set successfully');
+    } else {
+      console.log('⏭️ Skipping webhook setup for development mode');
     }
-
-    console.log('✅ Webhook set successfully');
 
     // Шаг 2: Устанавливаем команды бота
     const commandsResponse = await fetch(
