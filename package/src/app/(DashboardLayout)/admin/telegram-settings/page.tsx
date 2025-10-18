@@ -279,21 +279,18 @@ const TelegramSettingsPage = () => {
             <Divider sx={{ my: 3 }} />
 
             {/* Инструкции по запуску бота */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Запуск Telegram бота:
+            <Box sx={{ mb: 3, p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
+              <Typography variant="h6" gutterBottom color="success.dark">
+                ✅ Для продакшена (рекомендуется):
               </Typography>
               <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                1. Установите зависимости: <code>npm install</code>
+                Бот НЕ требует постоянного запуска скрипта!
               </Typography>
               <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                2. Запустите бота: <code>node telegram-bot.js</code>
+                Используйте вебхуки - Telegram сам отправит данные
               </Typography>
               <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                3. Бот будет обрабатывать команды <code>/start</code> и <code>/auth</code>
-              </Typography>
-              <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                4. Пользователи смогут авторизоваться через кнопку подтверждения
+                <strong>Преимущества:</strong> Экономично, надежно, без polling
               </Typography>
             </Box>
 
@@ -302,28 +299,22 @@ const TelegramSettingsPage = () => {
             {/* Инструкции */}
             <Box>
               <Typography variant="h6" gutterBottom>
-                Как настроить бота в BotFather:
+                Полная настройка для продакшена:
               </Typography>
               <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                1. Напишите боту <strong>@BotFather</strong> в Telegram
+                1. 📱 В BotFather настройте бота: <code>/newbot</code>, <code>/setdomain dnrtop.ru</code>
               </Typography>
               <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                2. Отправьте команду <code>/newbot</code>
+                2. ⚙️ В админке введите токен и username бота
               </Typography>
               <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                3. Выберите имя бота и username
+                3. 💾 Нажмите &ldquo;Сохранить настройки&rdquo; - вебхук установится автоматически
               </Typography>
               <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                4. Скопируйте токен и вставьте выше
+                4. ✅ Готово! Бот работает через вебхуки без постоянного скрипта
               </Typography>
               <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                5. Отправьте <code>/setdomain</code> и укажите: <code>dnrtop.ru</code> (для продакшена)
-              </Typography>
-              <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                6. Сохраните настройки выше - вебхук и команды установятся автоматически
-              </Typography>
-              <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                7. Запустите бота локально: <code>node telegram-bot.js</code>
+                5. 🔍 Используйте &ldquo;Протестировать бота&rdquo; для проверки связи
               </Typography>
             </Box>
           </DashboardCard>
