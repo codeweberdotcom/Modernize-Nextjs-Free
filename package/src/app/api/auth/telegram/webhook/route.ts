@@ -82,10 +82,11 @@ export async function POST(request: NextRequest) {
       // Create new user
       const result = await dbRun(
         `INSERT INTO users (
-          telegram_id, telegram_username, telegram_first_name,
+          email, password, telegram_id, telegram_username, telegram_first_name,
           telegram_last_name, name, auth_method
-        ) VALUES (?, ?, ?, ?, ?, ?)`,
-        [userData.id, userData.username, userData.first_name,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [`telegram_${userData.id}@user.local`, `telegram_auth_${userData.id}`,
+         userData.id, userData.username, userData.first_name,
          userData.last_name, `${userData.first_name} ${userData.last_name || ''}`.trim(), 'telegram']
       );
 

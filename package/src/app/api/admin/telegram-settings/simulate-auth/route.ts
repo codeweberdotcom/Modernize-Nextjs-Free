@@ -46,6 +46,10 @@ export async function POST(request: NextRequest) {
       auth_date: Math.floor(Date.now() / 1000)
     };
 
+    // Для Telegram пользователей создаем фиктивные данные
+    const testEmail = `test_${testUserData.id}@telegram.local`;
+    const testPassword = 'telegram_auth_' + testUserData.id;
+
     console.log('Creating test user:', testUserData);
 
     // Шаг 3: Создаем тестового пользователя
@@ -72,10 +76,10 @@ export async function POST(request: NextRequest) {
       console.log('Creating new test user');
       const result = await dbRun(
         `INSERT INTO users (
-          telegram_id, telegram_username, telegram_first_name,
+          email, password, telegram_id, telegram_username, telegram_first_name,
           telegram_last_name, name, auth_method
-        ) VALUES (?, ?, ?, ?, ?, ?)`,
-        [testUserData.id, testUserData.username, testUserData.first_name,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [testEmail, testPassword, testUserData.id, testUserData.username, testUserData.first_name,
          testUserData.last_name, `${testUserData.first_name} ${testUserData.last_name}`.trim(), 'telegram']
       );
 
