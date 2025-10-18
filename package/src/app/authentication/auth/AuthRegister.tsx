@@ -179,10 +179,10 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
                 <Box display="flex" justifyContent="center" mb={2}>
                     <div
                         className="telegram-login"
-                        data-telegram-login={process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "your-bot-username"}
+                        data-telegram-login={process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "domashka1979bot"}
                         data-size="large"
                         data-radius="10"
-                        data-auth-url={`${typeof window !== 'undefined' ? window.location.origin : 'https://tasty-fly-87.loca.lt'}/api/auth/telegram`}
+                        data-auth-url={`${typeof window !== 'undefined' ? window.location.origin : 'https://dnrtop.ru'}`}
                         data-request-access="write"
                     />
                 </Box>

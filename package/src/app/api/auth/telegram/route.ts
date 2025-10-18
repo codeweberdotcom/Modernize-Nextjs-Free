@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { dbGet, dbRun } from '@/lib/db';
 import { initializeDatabase } from '@/lib/init-db';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+
+function validateTelegramHash(data: any, botToken: string): boolean {
+  const secretKey = crypto.createHash('sha256').update(botToken).digest();
+
+  const dataCheckString = Object.keys(data)
+    .filter(key => key !== 'hash')
+    .sort()
+    .map(key => `${key}=${data[key]}`)
+    .join('\n');
+
+  const hmac = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+  return hmac === data.hash;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,13 +25,30 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { id, first_name, last_name, username, photo_url, hash } = body;
 
-    // В реальном приложении здесь должна быть проверка хеша от Telegram
-    // Для демонстрации пропустим эту проверку
-
-    if (!id || !first_name) {
+    // Проверяем обязательные поля
+    if (!id || !first_name || !hash) {
       return NextResponse.json(
         { error: 'Недостаточно данных от Telegram' },
         { status: 400 }
+      );
+    }
+
+    // Получаем токен бота из переменных окружения
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) {
+      console.error('TELEGRAM_BOT_TOKEN не настроен');
+      return NextResponse.json(
+        { error: 'Ошибка конфигурации сервера' },
+        { status: 500 }
+      );
+    }
+
+    // Валидация хеша от Telegram
+    const isValidHash = validateTelegramHash(body, botToken);
+    if (!isValidHash) {
+      return NextResponse.json(
+        { error: 'Неверная подпись от Telegram' },
+        { status: 401 }
       );
     }
 
