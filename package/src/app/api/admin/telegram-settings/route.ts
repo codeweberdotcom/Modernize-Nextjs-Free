@@ -100,10 +100,15 @@ NEXTAUTH_SECRET=your-nextauth-secret-key
     // Записываем обновленный файл
     fs.writeFileSync(envPath, envContent);
 
-    // Асинхронно устанавливаем вебхук и команды (только для продакшена)
+    // Асинхронно устанавливаем команды бота (всегда)
+    setupBotCommandsAsync(botToken, botUsername).catch(error => {
+      console.error('Error setting up bot commands:', error);
+    });
+
+    // Асинхронно устанавливаем вебхук (только для продакшена)
     if (process.env.NODE_ENV === 'production') {
-      setupBotAsync(botToken, botUsername).catch(error => {
-        console.error('Error setting up bot:', error);
+      setWebhookAsync(botToken, botUsername).catch(error => {
+        console.error('Error setting webhook:', error);
       });
     } else {
       console.log('⏭️ Skipping webhook setup for development mode');
@@ -141,48 +146,11 @@ function setEnvValue(envContent: string, key: string, value: string): string {
   }
 }
 
-async function setupBotAsync(botToken: string, botUsername: string): Promise<void> {
+async function setupBotCommandsAsync(botToken: string, botUsername: string): Promise<void> {
   try {
-    console.log('Setting up Telegram bot completely...');
+    console.log('Setting up Telegram bot commands...');
 
-    const isProduction = process.env.NODE_ENV === 'production';
-
-    if (isProduction) {
-      // Определяем URL для вебхука только для продакшена
-      const baseUrl = `https://${process.env.VERCEL_URL || 'dnrtop.ru'}`;
-      const webhookUrl = `${baseUrl}/api/auth/telegram/webhook`;
-
-      console.log(`Setting webhook to: ${webhookUrl}`);
-
-      // Шаг 1: Устанавливаем вебхук
-      const webhookResponse = await fetch(
-        `https://api.telegram.org/bot${botToken}/setWebhook`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: webhookUrl,
-            max_connections: 1,
-            drop_pending_updates: true,
-          }),
-        }
-      );
-
-      const webhookResult = await webhookResponse.json();
-
-      if (!webhookResult.ok) {
-        console.error('❌ Failed to set webhook:', webhookResult);
-        throw new Error(`Failed to set webhook: ${webhookResult.description}`);
-      }
-
-      console.log('✅ Webhook set successfully');
-    } else {
-      console.log('⏭️ Skipping webhook setup for development mode');
-    }
-
-    // Шаг 2: Устанавливаем команды бота
+    // Устанавливаем команды бота
     const commandsResponse = await fetch(
       `https://api.telegram.org/bot${botToken}/setMyCommands`,
       {
@@ -211,10 +179,9 @@ async function setupBotAsync(botToken: string, botUsername: string): Promise<voi
       console.log('✅ Bot commands set successfully');
     } else {
       console.warn('⚠️ Failed to set bot commands:', commandsResult);
-      // Не считаем это критической ошибкой
     }
 
-    // Шаг 3: Устанавливаем описание бота
+    // Устанавливаем описание бота
     const descriptionResponse = await fetch(
       `https://api.telegram.org/bot${botToken}/setMyDescription`,
       {
@@ -232,10 +199,49 @@ async function setupBotAsync(botToken: string, botUsername: string): Promise<voi
       console.log('✅ Bot description set successfully');
     }
 
-    console.log('🎉 Bot setup completed successfully');
+  } catch (error) {
+    console.error('Error setting up bot commands:', error);
+    throw error;
+  }
+}
+
+async function setWebhookAsync(botToken: string, botUsername: string): Promise<void> {
+  try {
+    console.log('Setting up Telegram webhook...');
+
+    // Определяем URL для вебхука только для продакшена
+    const baseUrl = `https://${process.env.VERCEL_URL || 'dnrtop.ru'}`;
+    const webhookUrl = `${baseUrl}/api/auth/telegram/webhook`;
+
+    console.log(`Setting webhook to: ${webhookUrl}`);
+
+    // Устанавливаем вебхук
+    const webhookResponse = await fetch(
+      `https://api.telegram.org/bot${botToken}/setWebhook`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: webhookUrl,
+          max_connections: 1,
+          drop_pending_updates: true,
+        }),
+      }
+    );
+
+    const webhookResult = await webhookResponse.json();
+
+    if (!webhookResult.ok) {
+      console.error('❌ Failed to set webhook:', webhookResult);
+      throw new Error(`Failed to set webhook: ${webhookResult.description}`);
+    }
+
+    console.log('✅ Webhook set successfully');
 
   } catch (error) {
-    console.error('Error setting up bot:', error);
+    console.error('Error setting webhook:', error);
     throw error;
   }
 }
