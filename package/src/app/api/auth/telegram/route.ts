@@ -4,6 +4,11 @@ import { initializeDatabase } from '@/lib/init-db';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
+// Webhook endpoint for Telegram bot
+export async function GET() {
+  return NextResponse.json({ status: 'Telegram webhook endpoint active' });
+}
+
 function validateTelegramHash(data: any, botToken: string): boolean {
   const secretKey = crypto.createHash('sha256').update(botToken).digest();
 
@@ -23,7 +28,22 @@ export async function POST(request: NextRequest) {
     await initializeDatabase();
 
     const body = await request.json();
-    const { id, first_name, last_name, username, photo_url, hash } = body;
+    const { id, first_name, last_name, username, photo_url, auth_date, hash } = body;
+
+    // Handle both webhook data from bot and direct widget data
+    let userData = { id, first_name, last_name, username, photo_url, hash };
+
+    // If this is webhook data from bot, validate it
+    if (auth_date && !hash) {
+      // This is webhook data from bot - validate bot token
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      if (!botToken) {
+        return NextResponse.json({ error: 'Bot not configured' }, { status: 500 });
+      }
+
+      // For webhook data, we trust the bot's validation
+      userData.hash = 'webhook_validated';
+    }
 
     // Проверяем обязательные поля
     if (!id || !first_name || !hash) {

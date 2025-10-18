@@ -35,7 +35,7 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
 
     useEffect(() => {
         // Инициализация Telegram Widget только на клиенте
-        if (typeof window !== 'undefined') {
+        const initializeWidget = () => {
             console.log('Starting Telegram widget initialization...');
 
             // Проверяем, загружен ли уже скрипт
@@ -72,7 +72,12 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
                 console.error('Error creating Telegram script:', error);
                 showFallbackButton();
             }
-        }
+        };
+
+        // Небольшая задержка для избежания hydration проблем
+        const timer = setTimeout(initializeWidget, 100);
+
+        return () => clearTimeout(timer);
     }, []);
 
     const initTelegramWidget = () => {
@@ -302,6 +307,7 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
                         value={formData.name}
                         onChange={handleChange}
                         required
+                        autoComplete="off"
                     />
 
                     <Typography variant="subtitle1"
@@ -315,6 +321,7 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
                         value={formData.email}
                         onChange={handleChange}
                         required
+                        autoComplete="off"
                     />
 
                     <Typography variant="subtitle1"
@@ -328,6 +335,7 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
                         value={formData.password}
                         onChange={handleChange}
                         required
+                        autoComplete="off"
                     />
                 </Stack>
                 <Button
