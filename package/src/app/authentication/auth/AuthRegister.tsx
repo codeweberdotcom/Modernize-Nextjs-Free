@@ -33,14 +33,17 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
     useEffect(() => {
         // Инициализация Telegram Widget только на клиенте
         if (typeof window !== 'undefined') {
+            // Проверяем, загружен ли уже скрипт
+            const existingScript = document.querySelector('script[src*="telegram-widget.js"]');
+            if (existingScript) {
+                initTelegramWidget();
+                return;
+            }
+
             const script = document.createElement('script');
             script.src = 'https://telegram.org/js/telegram-widget.js?22';
             script.async = true;
-            script.onload = () => {
-                if (window.TelegramLoginWidget) {
-                    window.TelegramLoginWidget.init();
-                }
-            };
+            script.onload = initTelegramWidget;
             document.head.appendChild(script);
 
             return () => {
@@ -50,6 +53,22 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
             };
         }
     }, []);
+
+    const initTelegramWidget = () => {
+        // Ждем немного для полной загрузки скрипта
+        setTimeout(() => {
+            if (window.TelegramLoginWidget && window.TelegramLoginWidget.init) {
+                try {
+                    window.TelegramLoginWidget.init();
+                    console.log('Telegram widget initialized successfully');
+                } catch (error) {
+                    console.error('Error initializing Telegram widget:', error);
+                }
+            } else {
+                console.warn('TelegramLoginWidget not available');
+            }
+        }, 500);
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({
@@ -136,15 +155,22 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const handleTelegramCallback = (user: any) => {
+                console.log('Telegram auth callback triggered:', user);
                 handleTelegramAuth(user);
             };
 
             // @ts-ignore
             window.handleTelegramAuth = handleTelegramCallback;
 
+            // Попытка повторной инициализации через 2 секунды
+            const retryInit = setTimeout(() => {
+                initTelegramWidget();
+            }, 2000);
+
             return () => {
                 // @ts-ignore
                 delete window.handleTelegramAuth;
+                clearTimeout(retryInit);
             };
         }
     }, []);
@@ -179,12 +205,24 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
                 <Box display="flex" justifyContent="center" mb={2}>
                     <div
                         className="telegram-login"
-                        data-telegram-login={process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "domashka1979bot"}
+                        data-telegram-login="domashka1979bot"
                         data-size="large"
                         data-radius="10"
-                        data-auth-url={`${typeof window !== 'undefined' ? window.location.origin : 'https://dnrtop.ru'}`}
+                        data-auth-url="https://dnrtop.ru"
                         data-request-access="write"
-                    />
+                        style={{
+                            display: 'inline-block',
+                            minHeight: '50px',
+                            backgroundColor: '#0088cc',
+                            borderRadius: '10px',
+                            padding: '2px'
+                        }}
+                    >
+                        {/* Fallback text if widget fails to load */}
+                        <div style={{display: 'none'}} id="telegram-fallback">
+                            Загрузка кнопки Telegram...
+                        </div>
+                    </div>
                 </Box>
                 <Divider sx={{ my: 2 }}>
                     <Typography variant="body2" color="textSecondary">
