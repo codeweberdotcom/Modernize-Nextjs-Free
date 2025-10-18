@@ -43,7 +43,14 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
             const script = document.createElement('script');
             script.src = 'https://telegram.org/js/telegram-widget.js?22';
             script.async = true;
-            script.onload = initTelegramWidget;
+            script.onload = () => {
+                console.log('Telegram script loaded successfully');
+                initTelegramWidget();
+            };
+            script.onerror = () => {
+                console.error('Failed to load Telegram script');
+                showFallbackButton();
+            };
             document.head.appendChild(script);
 
             return () => {
@@ -63,11 +70,27 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
                     console.log('Telegram widget initialized successfully');
                 } catch (error) {
                     console.error('Error initializing Telegram widget:', error);
+                    showFallbackButton();
                 }
             } else {
                 console.warn('TelegramLoginWidget not available');
+                showFallbackButton();
             }
-        }, 500);
+        }, 1000);
+    };
+
+    const showFallbackButton = () => {
+        const fallbackDiv = document.getElementById('telegram-fallback');
+        if (fallbackDiv) {
+            fallbackDiv.style.display = 'flex';
+            fallbackDiv.style.cursor = 'pointer';
+            fallbackDiv.innerHTML = '🚀 Войти через Telegram';
+
+            // Добавляем обработчик клика
+            fallbackDiv.onclick = () => {
+                window.open('https://t.me/domashka1979bot?start=auth', '_blank');
+            };
+        }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -218,9 +241,20 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
                             padding: '2px'
                         }}
                     >
-                        {/* Fallback text if widget fails to load */}
-                        <div style={{display: 'none'}} id="telegram-fallback">
-                            Загрузка кнопки Telegram...
+                        {/* Fallback button if widget fails to load */}
+                        <div id="telegram-fallback" style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: '46px',
+                            backgroundColor: '#0088cc',
+                            borderRadius: '8px',
+                            color: 'white',
+                            fontSize: '16px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                        }}>
+                            🚀 Войти через Telegram
                         </div>
                     </div>
                 </Box>
