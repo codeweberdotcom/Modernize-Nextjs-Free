@@ -199,7 +199,7 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
         }
     };
 
-    // Обработчик для Telegram Widget
+    // Обработчик для Telegram Widget и токенов из URL
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const handleTelegramCallback = (user: any) => {
@@ -209,6 +209,31 @@ const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
 
             // @ts-ignore
             window.handleTelegramAuth = handleTelegramCallback;
+
+            // Проверяем токен в URL (для редиректа после авторизации в боте)
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const auth = urlParams.get('auth');
+            const isNew = urlParams.get('new');
+
+            if (token && auth === 'telegram') {
+                console.log('Token found in URL, storing and redirecting...');
+                localStorage.setItem('token', token);
+
+                if (isNew === 'true') {
+                    setSuccess('Добро пожаловать! Вы успешно зарегистрированы через Telegram.');
+                } else {
+                    setSuccess('С возвращением! Успешный вход через Telegram.');
+                }
+
+                // Очищаем URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+
+                // Редирект на главную страницу
+                setTimeout(() => {
+                    router.push('/');
+                }, 1500);
+            }
 
             // Попытка повторной инициализации через 2 секунды
             const retryInit = setTimeout(() => {
