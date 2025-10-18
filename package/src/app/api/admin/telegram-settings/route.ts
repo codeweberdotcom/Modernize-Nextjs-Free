@@ -102,13 +102,13 @@ NEXTAUTH_SECRET=your-nextauth-secret-key
 
     // Асинхронно устанавливаем команды бота (всегда)
     setupBotCommandsAsync(botToken, botUsername).catch(error => {
-      console.error('Error setting up bot commands:', error);
+      console.error('❌ Error setting up bot commands:', error);
     });
 
     // Асинхронно устанавливаем вебхук (только для продакшена)
     if (process.env.NODE_ENV === 'production') {
       setWebhookAsync(botToken, botUsername).catch(error => {
-        console.error('Error setting webhook:', error);
+        console.error('❌ Error setting webhook:', error);
       });
     } else {
       console.log('⏭️ Skipping webhook setup for development mode');
@@ -177,8 +177,10 @@ async function setupBotCommandsAsync(botToken: string, botUsername: string): Pro
 
     if (commandsResult.ok) {
       console.log('✅ Bot commands set successfully');
+      console.log('Commands set:', JSON.stringify(commandsResult.result, null, 2));
     } else {
-      console.warn('⚠️ Failed to set bot commands:', commandsResult);
+      console.error('❌ Failed to set bot commands:', commandsResult);
+      console.error('Response:', JSON.stringify(commandsResult, null, 2));
     }
 
     // Устанавливаем описание бота

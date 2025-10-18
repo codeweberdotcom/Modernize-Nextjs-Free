@@ -45,6 +45,7 @@ const TelegramSettingsPage = () => {
   const [success, setSuccess] = useState('');
   const [settingWebhook, setSettingWebhook] = useState(false);
   const [testingBot, setTestingBot] = useState(false);
+  const [simulatingAuth, setSimulatingAuth] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -176,6 +177,63 @@ const TelegramSettingsPage = () => {
     }
   };
 
+  const handleSimulateAuth = async () => {
+    if (!settings.botToken || !settings.botUsername) {
+      setError('Сначала сохраните настройки бота');
+      return;
+    }
+
+    setSimulatingAuth(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      // Шаг 1: Тестируем бота
+      const testResponse = await fetch('/api/admin/telegram-settings/test-bot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          botToken: settings.botToken,
+          botUsername: settings.botUsername,
+        }),
+      });
+
+      if (!testResponse.ok) {
+        setError('❌ Сначала настройте бота правильно');
+        return;
+      }
+
+      // Шаг 2: Симулируем авторизацию через бота
+      const simulateResponse = await fetch('/api/admin/telegram-settings/simulate-auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          botToken: settings.botToken,
+          botUsername: settings.botUsername,
+        }),
+      });
+
+      const data = await simulateResponse.json();
+
+      if (simulateResponse.ok) {
+        setSuccess(`✅ ${data.message}`);
+        if (data.test_user) {
+          setSuccess(prev => `${prev}\n\nТестовый пользователь создан:\nID: ${data.test_user.id}\nИмя: ${data.test_user.name}`);
+        }
+      } else {
+        setError(`❌ ${data.error}`);
+      }
+    } catch (err) {
+      setError('Ошибка сети. Попробуйте еще раз.');
+    } finally {
+      setSimulatingAuth(false);
+    }
+  };
+
   const handleChange = (field: keyof TelegramSettings) => (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -268,9 +326,28 @@ const TelegramSettingsPage = () => {
               </Button>
 
               <Button
+                variant="contained"
+                color="success"
+                onClick={handleSimulateAuth}
+                disabled={simulatingAuth || !settings.botToken || !settings.botUsername}
+                sx={{ mr: 2 }}
+              >
+                {simulatingAuth ? 'Симуляция...' : 'Симулировать авторизацию'}
+              </Button>
+
+              <Button
+                variant="outlined"
+                onClick={() => window.open(`https://t.me/${settings.botUsername}`, '_blank')}
+                disabled={!settings.botUsername}
+                sx={{ mr: 2 }}
+              >
+                Открыть в Telegram
+              </Button>
+
+              <Button
                 variant="outlined"
                 onClick={fetchSettings}
-                disabled={saving || settingWebhook || testingBot}
+                disabled={saving || settingWebhook || testingBot || simulatingAuth}
               >
                 Отменить
               </Button>
@@ -314,7 +391,7 @@ const TelegramSettingsPage = () => {
                 4. ✅ Готово! Бот работает через вебхуки без постоянного скрипта
               </Typography>
               <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                5. 🔍 Используйте &ldquo;Протестировать бота&rdquo; для проверки связи
+                5. 🔍 Используйте кнопки ниже для тестирования и симуляции
               </Typography>
             </Box>
           </DashboardCard>
