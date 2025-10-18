@@ -43,6 +43,8 @@ const TelegramSettingsPage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [settingWebhook, setSettingWebhook] = useState(false);
+  const [testingBot, setTestingBot] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -99,6 +101,78 @@ const TelegramSettingsPage = () => {
       setError('Ошибка сети. Попробуйте еще раз.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSetupWebhook = async () => {
+    if (!settings.botToken || !settings.botUsername) {
+      setError('Сначала сохраните настройки бота');
+      return;
+    }
+
+    setSettingWebhook(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch('/api/admin/telegram-settings/setup-webhook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          botToken: settings.botToken,
+          botUsername: settings.botUsername,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess(data.message);
+      } else {
+        setError(data.error || 'Ошибка установки вебхука');
+      }
+    } catch (err) {
+      setError('Ошибка сети. Попробуйте еще раз.');
+    } finally {
+      setSettingWebhook(false);
+    }
+  };
+
+  const handleTestBot = async () => {
+    if (!settings.botToken || !settings.botUsername) {
+      setError('Сначала сохраните настройки бота');
+      return;
+    }
+
+    setTestingBot(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch('/api/admin/telegram-settings/test-bot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          botToken: settings.botToken,
+          botUsername: settings.botUsername,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess(`✅ ${data.message}`);
+      } else {
+        setError(`❌ ${data.error}`);
+      }
+    } catch (err) {
+      setError('Ошибка сети. Попробуйте еще раз.');
+    } finally {
+      setTestingBot(false);
     }
   };
 
@@ -175,8 +249,28 @@ const TelegramSettingsPage = () => {
 
               <Button
                 variant="outlined"
+                color="secondary"
+                onClick={handleSetupWebhook}
+                disabled={settingWebhook || !settings.botToken || !settings.botUsername}
+                sx={{ mr: 2 }}
+              >
+                {settingWebhook ? 'Установка...' : 'Настроить вебхук'}
+              </Button>
+
+              <Button
+                variant="contained"
+                color="info"
+                onClick={handleTestBot}
+                disabled={testingBot || !settings.botToken || !settings.botUsername}
+                sx={{ mr: 2 }}
+              >
+                {testingBot ? 'Тестирование...' : 'Протестировать бота'}
+              </Button>
+
+              <Button
+                variant="outlined"
                 onClick={fetchSettings}
-                disabled={saving}
+                disabled={saving || settingWebhook || testingBot}
               >
                 Отменить
               </Button>
@@ -202,7 +296,10 @@ const TelegramSettingsPage = () => {
                 4. Скопируйте токен и вставьте выше
               </Typography>
               <Typography variant="body2" component="div" sx={{ mb: 1 }}>
-                5. Отправьте <code>/setdomain</code> и укажите: <code>http://localhost:3000</code>
+                5. Отправьте <code>/setdomain</code> и укажите: <code>dnrtop.ru</code> (для продакшена)
+              </Typography>
+              <Typography variant="body2" component="div" sx={{ mb: 1 }}>
+                6. Сохраните настройки выше - вебхук установится автоматически
               </Typography>
             </Box>
           </DashboardCard>

@@ -100,9 +100,14 @@ NEXTAUTH_SECRET=your-nextauth-secret-key
     // Записываем обновленный файл
     fs.writeFileSync(envPath, envContent);
 
+    // Асинхронно устанавливаем вебхук (не блокируем ответ)
+    setWebhookAsync(botToken, botUsername).catch(error => {
+      console.error('Error setting webhook:', error);
+    });
+
     return NextResponse.json({
       success: true,
-      message: 'Настройки Telegram успешно обновлены',
+      message: 'Настройки Telegram успешно обновлены. Вебхук устанавливается...',
     });
 
   } catch (error) {
@@ -129,5 +134,49 @@ function setEnvValue(envContent: string, key: string, value: string): string {
   } else {
     // Добавляем новую строку
     return envContent + `\n${key}=${value}`;
+  }
+}
+
+async function setWebhookAsync(botToken: string, botUsername: string): Promise<void> {
+  try {
+    console.log('Setting up Telegram webhook...');
+
+    // Определяем URL для вебхука в зависимости от окружения
+    const isProduction = process.env.NODE_ENV === 'production';
+    const baseUrl = isProduction
+      ? `https://${process.env.VERCEL_URL || 'dnrtop.ru'}`
+      : 'http://localhost:3000';
+
+    const webhookUrl = `${baseUrl}/api/auth/telegram/webhook`;
+
+    console.log(`Setting webhook to: ${webhookUrl}`);
+
+    // Устанавливаем вебхук через Telegram API
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/setWebhook`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: webhookUrl,
+          max_connections: 1,
+          drop_pending_updates: true,
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (result.ok) {
+      console.log('✅ Webhook set successfully');
+    } else {
+      console.error('❌ Failed to set webhook:', result);
+      throw new Error(`Failed to set webhook: ${result.description}`);
+    }
+  } catch (error) {
+    console.error('Error setting webhook:', error);
+    throw error;
   }
 }
