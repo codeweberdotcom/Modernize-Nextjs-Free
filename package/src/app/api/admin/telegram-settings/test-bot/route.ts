@@ -53,22 +53,44 @@ export async function POST(request: NextRequest) {
 
         // Определяем ожидаемый URL вебхука
         const isProduction = process.env.NODE_ENV === 'production';
+        const port = process.env.PORT || '3000';
         const baseUrl = isProduction
           ? `https://${process.env.VERCEL_URL || 'dnrtop.ru'}`
-          : 'http://localhost:3000';
+          : `http://localhost:${port}`;
         const expectedWebhookUrl = `${baseUrl}/api/auth/telegram/webhook`;
+
+        console.log('Current webhook URL:', webhookInfo.url);
+        console.log('Expected webhook URL:', expectedWebhookUrl);
 
         if (webhookInfo.url === expectedWebhookUrl) {
           return NextResponse.json({
             success: true,
             message: `Бот активен (@${botInfo.username}), вебхук настроен правильно`,
+            webhookUrl: webhookInfo.url,
+            expectedUrl: expectedWebhookUrl,
           });
         } else {
           return NextResponse.json({
             success: true,
-            message: `Бот активен (@${botInfo.username}), но вебхук указывает на другой URL: ${webhookInfo.url}`,
+            message: `Бот активен (@${botInfo.username}), но вебхук указывает на другой URL`,
+            webhookUrl: webhookInfo.url,
+            expectedUrl: expectedWebhookUrl,
+            issue: webhookInfo.url ? 'wrong_domain' : 'no_webhook',
           });
         }
+      } else {
+        // Webhook info not available or empty
+        return NextResponse.json({
+          success: true,
+          message: `Бот активен (@${botInfo.username}), но вебхук не настроен`,
+          webhookUrl: '',
+          expectedUrl: expectedWebhookUrl,
+          issue: 'no_webhook',
+          suggestion: process.env.NODE_ENV !== 'production'
+            ? 'Для разработки используйте polling режим. Для продакшена настройте вебхук.'
+            : 'Настройте вебхук для продакшена.',
+          setupWebhook: false,
+        });
       }
 
     } catch (error) {
@@ -94,10 +116,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      message: `Бот @${botInfo.username} активен и готов к работе!`,
-    });
 
   } catch (error) {
     console.error('Test bot error:', error);
